@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Hangman Saga</title>
+    <!-- Use the Tailwind CSS CDN for a quick setup -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* A custom font for a playful, retro look */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Custom scrollbar for aesthetics */
+        body::-webkit-scrollbar {
+            width: 8px;
+        }
+        body::-webkit-scrollbar-thumb {
+            background-color: #d1d5db; /* gray-300 */
+            border-radius: 4px;
+        }
+        body::-webkit-scrollbar-track {
+            background-color: #f3f4f6; /* gray-100 */
+        }
+        .message.success {
+            color: #10b981; /* emerald-500 */
+        }
+        .message.fail {
+            color: #ef4444; /* red-500 */
+        }
+
+        /* Style for the hangman parts */
+        .hangman-part {
+            fill: none;
+            stroke: #e2e8f0; /* gray-200 */
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        .hangman-part.visible {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100">
+    <!-- Main content container with consistent padding -->
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+
+        <!-- Header/Navbar Section -->
+        <header class="py-6 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <!-- A game controller icon for the logo -->
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-emerald-500" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm-5-8a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1z" clip-rule="evenodd" />
+                    <path fill-rule="evenodd" d="M11 6a1 1 0 100 2h1a1 1 0 100-2h-1z" clip-rule="evenodd" />
+                    <path fill-rule="evenodd" d="M9 12a1 1 0 100-2h1a1 1 0 100 2H9z" clip-rule="evenodd" />
+                </svg>
+                <span class="text-3xl font-bold text-gray-200">The Hangman Saga</span>
+            </div>
+        </header>
+
+        <!-- Main Game Section -->
+        <main class="text-center py-16">
+            <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight text-white mb-8">
+                Guess the Word, Save the Man.
+            </h1>
+
+            <!-- Game Display Area -->
+            <div class="flex flex-col items-center justify-center p-8 bg-gray-800 rounded-lg shadow-xl mb-8">
+                <!-- Hangman SVG Drawing -->
+                <div class="w-full max-w-sm mb-6">
+                    <svg class="w-full" viewBox="0 0 100 100">
+                        <!-- Gallow parts -->
+                        <path id="gallows-base" class="hangman-part" d="M10 90 H90" />
+                        <path id="gallows-pole" class="hangman-part" d="M20 90 V20" />
+                        <path id="gallows-top" class="hangman-part" d="M20 20 H60" />
+                        <path id="gallows-rope" class="hangman-part" d="M60 20 V30" />
+                        
+                        <!-- Hangman parts (10 parts for 10 attempts) -->
+                        <circle id="head" class="hangman-part" cx="60" cy="40" r="10" />
+                        <path id="body" class="hangman-part" d="M60 50 V70" />
+                        <path id="left-arm" class="hangman-part" d="M60 55 L50 65" />
+                        <path id="right-arm" class="hangman-part" d="M60 55 L70 65" />
+                        <path id="left-leg" class="hangman-part" d="M60 70 L50 80" />
+                        <path id="right-leg" class="hangman-part" d="M60 70 L70 80" />
+                    </svg>
+                </div>
+
+                <div class="text-4xl sm:text-5xl lg:text-6xl font-mono tracking-widest text-emerald-400 mb-6" id="wordDisplay">
+                    _ _ _ _ _ _
+                </div>
+                <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-8 text-gray-400 mb-6">
+                    <div>Attempts Left: <span class="font-bold text-gray-200" id="attempts">10</span></div>
+                    <div>Guessed Letters: <span class="font-bold text-gray-200" id="guessedLetters">-</span></div>
+                </div>
+                
+                <!-- Game Input and Controls -->
+                <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 mb-4">
+                    <input type="text" id="letterInput" class="w-full sm:w-20 p-3 text-center text-xl rounded-md bg-gray-700 border-gray-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition duration-300" maxlength="1" placeholder="A-Z">
+                    <button id="guessBtn" class="px-6 py-3 rounded-md text-white font-medium bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition duration-300">
+                        Guess
+                    </button>
+                    <button id="restartBtn" class="px-6 py-3 rounded-md text-gray-200 font-medium bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition duration-300">
+                        Restart
+                    </button>
+                </div>
+
+                <!-- Message Display -->
+                <div class="text-center h-8" id="message"></div>
+                <div class="text-sm text-gray-500 mt-4" id="wordBankExample"></div>
+            </div>
+        </main>
+        
+        <!-- Footer Section -->
+        <footer class="text-center py-8 border-t border-gray-700">
+            <p class="text-gray-500 text-sm">
+                &copy; 2024 The Hangman Saga. All rights reserved.
+            </p>
+        </footer>
+
+    </div>
+
+    <!-- Game Logic Script -->
+    <script>
+        (() => {
+            // word bank (same as your Python version + extras if you want)
+            const wordBank = ['hello', 'string', 'mango', 'berry', 'mask', 'name', 'game'];
+
+            // UI elements
+            const wordDisplay = document.getElementById('wordDisplay');
+            const attemptsEl = document.getElementById('attempts');
+            const guessedLettersEl = document.getElementById('guessedLetters');
+            const letterInput = document.getElementById('letterInput');
+            const guessBtn = document.getElementById('guessBtn');
+            const restartBtn = document.getElementById('restartBtn');
+            const message = document.getElementById('message');
+            const wordBankExample = document.getElementById('wordBankExample');
+
+            // Game state and hangman parts
+            let word = '';
+            let guessedWord = [];
+            let attempts = 10;
+            let guessedLetters = new Set();
+            const hangmanParts = [
+                'gallows-base', 'gallows-pole', 'gallows-top', 'gallows-rope', 'head', 'body', 'left-arm', 'right-arm', 'left-leg', 'right-leg'
+            ];
+
+            function pickWord() {
+                const idx = Math.floor(Math.random() * wordBank.length);
+                return wordBank[idx];
+            }
+
+            function startGame() {
+                word = pickWord();
+                guessedWord = Array.from({ length: word.length }, () => '_');
+                attempts = 10;
+                guessedLetters.clear();
+                resetHangmanDrawing();
+                updateUI();
+                message.textContent = '';
+                letterInput.value = '';
+                letterInput.disabled = false;
+                guessBtn.disabled = false;
+                letterInput.focus();
+                // show a hint of the bank (optional)
+                wordBankExample.textContent = `Word has ${word.length} letters`;
+            }
+            
+            function updateHangmanDrawing() {
+                // Show a new part of the hangman for each incorrect guess
+                const partsToShow = 10 - attempts;
+                if (partsToShow > 0 && partsToShow <= hangmanParts.length) {
+                    const partId = hangmanParts[partsToShow - 1];
+                    document.getElementById(partId).classList.add('visible');
+                }
+            }
+
+            function resetHangmanDrawing() {
+                // Hide all hangman parts at the start of the game
+                hangmanParts.forEach(partId => {
+                    document.getElementById(partId).classList.remove('visible');
+                });
+            }
+
+            function updateUI() {
+                wordDisplay.textContent = guessedWord.join(' ');
+                attemptsEl.textContent = attempts;
+                guessedLettersEl.textContent = guessedLetters.size ? Array.from(guessedLetters).join(', ') : '-';
+            }
+
+            function endGame(win) {
+                if (win) {
+                    message.textContent = `🎉 Congratulations! The word was "${word}".`;
+                    message.className = 'message success';
+                } else {
+                    message.textContent = `😢 You've run out of attempts! The word was "${word}".`;
+                    message.className = 'message fail';
+                }
+                letterInput.disabled = true;
+                guessBtn.disabled = true;
+            }
+
+            function handleGuess() {
+                const raw = letterInput.value.trim().toLowerCase();
+                letterInput.value = '';
+                message.className = 'message';
+
+                if (!raw || raw.length !== 1 || !/[a-z]/.test(raw)) {
+                    message.textContent = 'Please enter a single letter (a-z).';
+                    return;
+                }
+
+                const ch = raw[0];
+                if (guessedLetters.has(ch)) {
+                    message.textContent = `You already guessed "${ch}". Try another letter.`;
+                    return;
+                }
+
+                guessedLetters.add(ch);
+
+                if (word.includes(ch)) {
+                    // fill all positions
+                    for (let i = 0; i < word.length; i++) {
+                        if (word[i] === ch) guessedWord[i] = ch;
+                    }
+                    message.textContent = `Good! "${ch}" is in the word.`;
+                    message.className = 'message success';
+                } else {
+                    attempts -= 1;
+                    message.textContent = `Wrong guess: "${ch}".`;
+                    message.className = 'message fail';
+                    updateHangmanDrawing(); // Update the drawing on a wrong guess
+                }
+
+                updateUI();
+
+                // check win
+                if (!guessedWord.includes('_')) {
+                    endGame(true);
+                    return;
+                }
+                // check lose
+                if (attempts <= 0) {
+                    endGame(false);
+                }
+            }
+
+            // events
+            guessBtn.addEventListener('click', handleGuess);
+            letterInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') handleGuess();
+            });
+            restartBtn.addEventListener('click', () => {
+                startGame();
+            });
+
+            // Start the game when the page loads
+            startGame();
+        })();
+    </script>
+</body>
+</html>
